@@ -204,3 +204,64 @@ The upfront probing does add some extra computation, but its overall effect depe
     Although there's an extra initial step, in practice it should reduce wasted resources during the hyperparameter search phase. If the approach successfully narrows the search down to promising configurations, you could see an overall reduction in training cost and time—plus, as you noted, more generalizable and robust models.
 
 So, while there is an initial overhead, if your probing method effectively guides you to the right hyperparameters, the overall process becomes more efficient, leading to better models and potentially lower cost in the long run.
+
+
+
+Loss Landscape Probe & Promising Region Identification
+Concept Overview
+
+    The Analogy:
+
+        View the neural network's parameter space as a vast terrain.
+
+        Instead of surveying every point, drop "probes" (small perturbations) at selected points.
+
+        These probes help estimate local curvature, analogous to drilling boreholes in search of oil.
+
+        Low curvature (a flat, wide minimum) is considered promising for better generalisation.
+
+    Sampling Directions:
+
+        Due to the high-dimensionality, only a few directions can be intelligently sampled.
+
+        Strategies include:
+        a. Random Sampling: Use random, normalised perturbation vectors.
+        b. Gradient-based Directions: Sample along the gradient or its principal components.
+        c. Subspace Projections: Use dimensionality reduction techniques (e.g., PCA) to define sampling axes.
+
+    Local Curvature Estimation:
+
+        Perturb the parameters slightly along each chosen direction.
+
+        Re-evaluate the loss (or gradient) to compute a finite-difference estimate:
+
+        curvature ≈ ||∇L(θ + ε d) - ∇L(θ)|| / ε
+
+        Lower curvature indicates a flatter, wider region.
+
+    Constructing a Coarse Map:
+
+        After applying probes along multiple directions around a given hyperparameter vector, aggregate the curvature estimates from all directions (e.g., by averaging).
+
+        The aggregated curvature helps identify whether the region around the current hyperparameter configuration is generally flat (which tends to be promising for good generalization) or steep (which might suggest overfitting and poor generalization).
+
+    Guided Hyperparameter Search:
+
+        Use this map to focus on hyperparameter configurations that are both flat (promising for generalization) and cheap (easier to optimize).
+
+        This allows for faster and more efficient training, reducing unnecessary trial and error.
+
+    Meta-Model for Promising Region Identification:
+
+        Train a secondary neural network (meta-model) using the probe data to predict which hyperparameter regions are likely to be promising for training.
+
+            Features may include curvature estimate, gradient norm, loss delta, etc.
+
+        The meta-model helps identify promising regions to focus the training process on, but the actual training will be handled using SAM or other loss/gradient methods.
+
+    Cheap Regions Are Less Prone to Perturbations:
+
+        Cheap regions tend to be less sensitive to small changes in hyperparameters. This means that small perturbations won’t cause large fluctuations in the loss, making these regions easier to optimize and computationally efficient.
+
+        We will consider perturbation sensitivity as a factor in the promisingness score for regions, helping identify regions that are not only flat and stable but also easier to optimize.
+
